@@ -97,8 +97,12 @@ def generateJobDsl(jenkinsfiles) {
                         daysToKeep(7)
                     }
                 }
-                triggers {
-                    periodic(300) // Scan every 5 minutes
+                configure {
+                    def triggers = it / triggers / 'com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger'
+                    triggers << {
+                        spec('H/5 * * * *')    // Every 5 minutes
+                        interval(300000)        // 5 minutes in milliseconds
+                    }
                 }
             }
         """
