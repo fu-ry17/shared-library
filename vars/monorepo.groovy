@@ -98,13 +98,6 @@ def generateJobDsl(jenkinsfiles) {
                     git {
                         id('${folderId}-id')
                         remote('${env.GIT_URL}')
-                        traits {
-                            branchDiscoveryTrait()
-                            headWildcardFilter {
-                                includes('*')
-                                excludes('')
-                            }
-                        }
                     }
                 }
                 configure { node ->
@@ -114,6 +107,10 @@ def generateJobDsl(jenkinsfiles) {
                         strategyId(1)
                     }
                     traits << 'jenkins.plugins.git.traits.TagDiscoveryTrait'()
+                    traits << 'jenkins.scm.impl.trait.WildcardSCMHeadFilterTrait' {
+                        includes('*')
+                        excludes('')
+                    }
                 }
                 factory {
                     workflowBranchProjectFactory {
