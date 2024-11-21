@@ -13,6 +13,7 @@ def call() {
 }
 
 def generateJobDsl(jenkinsfiles) {
+    // Create base folders first
     def script = """
         folder('Generated') {
             description('Auto-generated pipelines for monorepo')
@@ -23,22 +24,48 @@ def generateJobDsl(jenkinsfiles) {
         }
     """
     
+    // Collect all unique folder paths
+    def allFolderPaths = []
     jenkinsfiles.each { file ->
         def path = file.path
         if (path == 'Jenkinsfile') {
-            return // Skip root Jenkinsfile
+            return
         }
         
-        // Get folder path by removing 'Jenkinsfile' from the end
+        def folderPath = path.substring(0, path.lastIndexOf('/'))
+        def parts = folderPath.split('/')
+        def currentPath = 'Generated/my-monorepo'
+        
+        // Add each level of the path
+        parts.each { part ->
+            currentPath += "/${part}"
+            if (!allFolderPaths.contains(currentPath)) {
+                allFolderPaths.add(currentPath)
+            }
+        }
+    }
+    
+    // Create all folders in order
+    allFolderPaths.sort().each { folderPath ->
+        script += """
+            folder('${folderPath}') {
+                description('Generated folder for ${folderPath.substring(folderPath.lastIndexOf('/') + 1)}')
+            }
+        """
+    }
+    
+    // Create jobs
+    jenkinsfiles.each { file ->
+        def path = file.path
+        if (path == 'Jenkinsfile') {
+            return
+        }
+        
         def folderPath = path.substring(0, path.lastIndexOf('/'))
         def fullFolderPath = "Generated/my-monorepo/${folderPath}"
         def folderId = folderPath.replace('/', '-')
         
         script += """
-            folder('${fullFolderPath}') {
-                description('Generated folder for ${folderPath}')
-            }
-            
             multibranchPipelineJob('${fullFolderPath}') {
                 branchSources {
                     git {
