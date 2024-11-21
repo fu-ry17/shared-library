@@ -12,6 +12,9 @@ def call() {
            lookupStrategy: 'SEED_JOB',
            ignoreExisting: true
 
+    // Wait a bit for jobs to be created
+    sleep(5)
+
     // Trigger immediate scan for all created jobs
     jenkinsfiles.each { file ->
         def path = file.path
@@ -50,7 +53,7 @@ def generateJobDsl(jenkinsfiles) {
         }
     """
     
-    // Collect all unique folder paths
+    // Create all intermediate folders first
     def allFolderPaths = []
     jenkinsfiles.each { file ->
         def path = file.path
@@ -58,20 +61,19 @@ def generateJobDsl(jenkinsfiles) {
             return
         }
         
-        def folderPath = path.substring(0, path.lastIndexOf('/'))
-        def parts = folderPath.split('/')
+        def parts = path.split('/')
         def currentPath = 'Generated/my-monorepo'
         
-        // Add each level of the path
-        parts.each { part ->
-            currentPath += "/${part}"
+        // Add intermediate folders (but not the final component folder)
+        for (int i = 0; i < parts.length - 2; i++) {
+            currentPath += "/${parts[i]}"
             if (!allFolderPaths.contains(currentPath)) {
                 allFolderPaths.add(currentPath)
             }
         }
     }
     
-    // Create all folders in order
+    // Create intermediate folders
     allFolderPaths.sort().each { folderPath ->
         script += """
             folder('${folderPath}') {
@@ -80,7 +82,7 @@ def generateJobDsl(jenkinsfiles) {
         """
     }
     
-    // Create jobs
+    // Create MultiBranch Pipeline jobs
     jenkinsfiles.each { file ->
         def path = file.path
         if (path == 'Jenkinsfile') {
@@ -123,11 +125,9 @@ def generateJobDsl(jenkinsfiles) {
                         daysToKeep(7)
                     }
                 }
-                configure {
-                    def triggers = it / triggers / 'com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger'
-                    triggers << {
-                        spec('H/5 * * * *')    // Every 5 minutes
-                        interval(300000)        // 5 minutes in milliseconds
+                triggers {
+                    periodicTrigger {
+                        interval('5m')
                     }
                 }
             }
