@@ -23,9 +23,13 @@ def call() {
         
         // Trigger branch indexing using the correct method
         def job = jenkins.model.Jenkins.instance.getItemByFullName(fullFolderPath)
+        println "Found job: ${job?.class?.name} at path: ${fullFolderPath}"
         if (job instanceof jenkins.branch.MultiBranchProject) {
+            println "Triggering scan for: ${fullFolderPath}"
             job.scheduleBuild2(0)
             job.compute()
+        } else {
+            println "Warning: Job not found or not a MultiBranchProject at: ${fullFolderPath}"
         }
     }
 }
@@ -94,9 +98,17 @@ def generateJobDsl(jenkinsfiles) {
                     git {
                         id('${folderId}-id')
                         remote('${env.GIT_URL}')
+                        traits {
+                            branchDiscoveryTrait()
+                            headWildcardFilter {
+                                includes('*')
+                                excludes('')
+                            }
+                        }
                     }
                 }
                 configure { node ->
+                    println "Configuring job: ${fullFolderPath}"
                     def traits = node / sources / data / 'jenkins.branch.BranchSource' / source / traits
                     traits << 'jenkins.plugins.git.traits.BranchDiscoveryTrait' {
                         strategyId(1)
