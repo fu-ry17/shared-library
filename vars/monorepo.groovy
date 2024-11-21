@@ -29,8 +29,8 @@ def call() {
         println "Found job: ${job?.class?.name} at path: ${fullFolderPath}"
         if (job instanceof jenkins.branch.MultiBranchProject) {
             println "Triggering scan for: ${fullFolderPath}"
-            job.scheduleBuild2(0)
-            job.compute()
+            job.scheduleBuild()
+            job.indexing.run()
         } else {
             println "Warning: Job not found or not a MultiBranchProject at: ${fullFolderPath}"
         }
