@@ -74,23 +74,28 @@ def generateJobDsl(jenkinsfiles) {
             multibranchPipelineJob('${fullFolderPath}') {
                 displayName('${folderPath.split('/').last()}')
                 branchSources {
-                    git {
-                        id('${folderId}-id')
-                        remote('${env.GIT_URL}')
-                        credentialsId('git-credentials')
-                        traits {
-                            // Discover branches
-                            branchDiscoveryTrait {
-                                strategyId(1) // Detect all branches
+                    branchSource {
+                        source {
+                            git {
+                                id('${folderId}-id')
+                                remote('${env.GIT_URL}')
+                                credentialsId('git-credentials')
+                                includes('*')
                             }
-                            // Discover tags
-                            tagDiscoveryTrait()
-                            // Discover PRs from origin
-                            originPullRequestDiscoveryTrait {
-                                strategyId(1) // Merging the PR with current branch
+                        }
+                        strategy {
+                            defaultBranchPropertyStrategy {
+                                props {
+                                    noTriggerBranchProperty()
+                                }
                             }
                         }
                     }
+                }
+                configure {
+                    def traits = it / sources / data / 'jenkins.branch.BranchSource' / source / traits
+                    traits << 'jenkins.plugins.git.traits.BranchDiscoveryTrait' {}
+                    traits << 'jenkins.plugins.git.traits.TagDiscoveryTrait' {}
                 }
                 factory {
                     workflowBranchProjectFactory {
@@ -104,9 +109,7 @@ def generateJobDsl(jenkinsfiles) {
                     }
                 }
                 triggers {
-                    periodicFolderTrigger {
-                        interval('5m') // Scan repository every 5 minutes
-                    }
+                    periodic(300) // Scan every 5 minutes
                 }
             }
         """
