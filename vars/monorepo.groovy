@@ -78,6 +78,18 @@ def generateJobDsl(jenkinsfiles) {
                         id('${folderId}-id')
                         remote('${env.GIT_URL}')
                         credentialsId('git-credentials')
+                        traits {
+                            // Discover branches
+                            branchDiscoveryTrait {
+                                strategyId(1) // Detect all branches
+                            }
+                            // Discover tags
+                            tagDiscoveryTrait()
+                            // Discover PRs from origin
+                            originPullRequestDiscoveryTrait {
+                                strategyId(1) // Merging the PR with current branch
+                            }
+                        }
                     }
                 }
                 factory {
@@ -89,6 +101,11 @@ def generateJobDsl(jenkinsfiles) {
                     discardOldItems {
                         numToKeep(20)
                         daysToKeep(7)
+                    }
+                }
+                triggers {
+                    periodicFolderTrigger {
+                        interval('5m') // Scan repository every 5 minutes
                     }
                 }
             }
