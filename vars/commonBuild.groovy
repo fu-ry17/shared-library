@@ -23,6 +23,13 @@ def call() {
                 }
             }
 
+             stage('Hello Amigos') {
+                steps {
+                    echo "Jenkins shared libs works well"
+                    // Add your common test steps here
+                }
+            }
+
             stage('Check Changes') {
                 steps {
                     script {
