@@ -74,28 +74,17 @@ def generateJobDsl(jenkinsfiles) {
             multibranchPipelineJob('${fullFolderPath}') {
                 displayName('${folderPath.split('/').last()}')
                 branchSources {
-                    branchSource {
-                        source {
-                            git {
-                                id('${folderId}-id')
-                                remote('${env.GIT_URL}')
-                                credentialsId('git-credentials')
-                                includes('*')
-                            }
-                        }
-                        strategy {
-                            defaultBranchPropertyStrategy {
-                                props {
-                                    noTriggerBranchProperty()
-                                }
-                            }
-                        }
+                    git {
+                        id('${folderId}-id')
+                        remote('${env.GIT_URL}')
                     }
                 }
-                configure {
-                    def traits = it / sources / data / 'jenkins.branch.BranchSource' / source / traits
-                    traits << 'jenkins.plugins.git.traits.BranchDiscoveryTrait' {}
-                    traits << 'jenkins.plugins.git.traits.TagDiscoveryTrait' {}
+                configure { node ->
+                    def traits = node / sources / data / 'jenkins.branch.BranchSource' / source / traits
+                    traits << 'jenkins.plugins.git.traits.BranchDiscoveryTrait' {
+                        strategyId(1)
+                    }
+                    traits << 'jenkins.plugins.git.traits.TagDiscoveryTrait'()
                 }
                 factory {
                     workflowBranchProjectFactory {
