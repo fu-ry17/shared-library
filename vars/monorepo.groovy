@@ -9,12 +9,17 @@ def call() {
     jobDsl scriptText: dslScript,
            removedJobAction: 'DELETE',
            removedViewAction: 'DELETE',
-           lookupStrategy: 'SEED_JOB'
+           lookupStrategy: 'SEED_JOB',
+           ignoreExisting: true
 }
 
 def generateJobDsl(jenkinsfiles) {
     // Create base folders first
     def script = """
+        if(jenkins.model.Jenkins.instance.getItem('Generated')) {
+            jenkins.model.Jenkins.instance.getItem('Generated').delete()
+        }
+        
         folder('Generated') {
             description('Auto-generated pipelines for monorepo')
         }
@@ -67,6 +72,7 @@ def generateJobDsl(jenkinsfiles) {
         
         script += """
             multibranchPipelineJob('${fullFolderPath}') {
+                displayName('${folderPath.split('/').last()}')
                 branchSources {
                     git {
                         id('${folderId}-id')
