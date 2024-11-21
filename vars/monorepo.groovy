@@ -21,8 +21,12 @@ def call() {
         def folderPath = path.substring(0, path.lastIndexOf('/'))
         def fullFolderPath = "Generated/my-monorepo/${folderPath}"
         
-        // Trigger scan
-        jenkins.model.Jenkins.instance.getItemByFullName(fullFolderPath)?.scheduleBuild()
+        // Trigger branch indexing using the correct method
+        def job = jenkins.model.Jenkins.instance.getItemByFullName(fullFolderPath)
+        if (job instanceof jenkins.branch.MultiBranchProject) {
+            job.scheduleBuild2(0)
+            job.compute()
+        }
     }
 }
 
