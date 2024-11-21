@@ -22,7 +22,7 @@ def call() {
             return
         }
         def folderPath = path.substring(0, path.lastIndexOf('/'))
-        def fullFolderPath = "Generated/my-monorepo/${folderPath}"
+        def fullFolderPath = "monorepo/${folderPath}"
         
         // Trigger branch indexing using the correct method
         def job = jenkins.model.Jenkins.instance.getItemByFullName(fullFolderPath)
@@ -38,18 +38,14 @@ def call() {
 }
 
 def generateJobDsl(jenkinsfiles) {
-    // Create base folders first
+    // Create base folder first
     def script = """
-        if(jenkins.model.Jenkins.instance.getItem('Generated')) {
-            jenkins.model.Jenkins.instance.getItem('Generated').delete()
+        if(jenkins.model.Jenkins.instance.getItem('monorepo')) {
+            jenkins.model.Jenkins.instance.getItem('monorepo').delete()
         }
         
-        folder('Generated') {
-            description('Auto-generated pipelines for monorepo')
-        }
-        
-        folder('Generated/my-monorepo') {
-            description('Pipelines for my-monorepo')
+        folder('monorepo') {
+            description('Pipelines for monorepo')
         }
     """
     
@@ -62,7 +58,7 @@ def generateJobDsl(jenkinsfiles) {
         }
         
         def parts = path.split('/')
-        def currentPath = 'Generated/my-monorepo'
+        def currentPath = 'monorepo'
         
         // Add intermediate folders (but not the final component folder)
         for (int i = 0; i < parts.length - 2; i++) {
@@ -90,7 +86,7 @@ def generateJobDsl(jenkinsfiles) {
         }
         
         def folderPath = path.substring(0, path.lastIndexOf('/'))
-        def fullFolderPath = "Generated/my-monorepo/${folderPath}"
+        def fullFolderPath = "monorepo/${folderPath}"
         def folderId = folderPath.replace('/', '-')
         
         script += """
@@ -125,9 +121,11 @@ def generateJobDsl(jenkinsfiles) {
                         daysToKeep(7)
                     }
                 }
-                triggers {
-                    periodicTrigger {
-                        interval('5m')
+                configure {
+                    def triggers = it / triggers / 'com.cloudbees.hudson.plugins.folder.computed.PeriodicFolderTrigger'
+                    triggers << {
+                        spec('H/5 * * * *')
+                        interval(300000)
                     }
                 }
             }
