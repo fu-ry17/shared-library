@@ -11,6 +11,19 @@ def call() {
            removedViewAction: 'DELETE',
            lookupStrategy: 'SEED_JOB',
            ignoreExisting: true
+
+    // Trigger immediate scan for all created jobs
+    jenkinsfiles.each { file ->
+        def path = file.path
+        if (path == 'Jenkinsfile') {
+            return
+        }
+        def folderPath = path.substring(0, path.lastIndexOf('/'))
+        def fullFolderPath = "Generated/my-monorepo/${folderPath}"
+        
+        // Trigger scan
+        jenkins.model.Jenkins.instance.getItemByFullName(fullFolderPath)?.scheduleBuild()
+    }
 }
 
 def generateJobDsl(jenkinsfiles) {
