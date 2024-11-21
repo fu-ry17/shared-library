@@ -29,20 +29,20 @@ def generateJobDsl(jenkinsfiles) {
             return // Skip root Jenkinsfile
         }
         
-        def folders = path.split('/')
-        folders.pop() // Remove Jenkinsfile name
-        
-        def folderPath = "Generated/my-monorepo/${folders.join('/')}"
+        // Get folder path by removing 'Jenkinsfile' from the end
+        def folderPath = path.substring(0, path.lastIndexOf('/'))
+        def fullFolderPath = "Generated/my-monorepo/${folderPath}"
+        def folderId = folderPath.replace('/', '-')
         
         script += """
-            folder('${folderPath}') {
-                description('Generated folder for ${folders.join('/')}')
+            folder('${fullFolderPath}') {
+                description('Generated folder for ${folderPath}')
             }
             
-            multibranchPipelineJob('${folderPath}') {
+            multibranchPipelineJob('${fullFolderPath}') {
                 branchSources {
                     git {
-                        id('${folders.join('-')}-id')
+                        id('${folderId}-id')
                         remote('${env.GIT_URL}')
                         credentialsId('git-credentials')
                     }
