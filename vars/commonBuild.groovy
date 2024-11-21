@@ -1,3 +1,5 @@
+#!/usr/bin/env groovy
+
 def call() {
     // Get component name from the Jenkinsfile path
     def path = env.JOB_NAME.tokenize('/') as String[]
